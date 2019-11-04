@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Table{% endblock %}
+{% block h2text %}Таблица редактирования{% endblock %}
+{% block content %}
+{%- if 'admin' in rule or 'editor' in rule -%}
+<button type="button" class="btn btn-primary float-right">Добавить пользователя</button>
+{% endif %}
+<table class="table">
+  <thead class="thead-light">
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">email</th>
+      <th scope="col">Имя</th>
+      <th scope="col">Фамилия</th>
+      {%- if 'admin' in rule or 'editor' in rule -%}
+      <th scope="col">Действия</th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody>
+  {% for item in items -%}
+    <tr>
+      <th scope="row">{{ item.id }}</th>
+      <td>{{ item.email }}</td>
+      <td>{{ item.name }}</td>
+      <td>{{ item.surname }}</td>
+      {%- if 'admin' in rule or 'editor' in rule -%}
+      <td>
+        <div class="btn-group" role="group">
+          <button id="btnGroupDrop1" type="button" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            Действия
+          </button>
+          <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+            <a class="dropdown-item" href="#">Редактировать</a>
+            <a class="dropdown-item" href="#">Удалить</a>
+          </div>
+        </div>
+      </td>
+      {% endif %}
+    </tr>
+  {%- endfor %}
+  </tbody>
+</table>
+{% endblock %}
