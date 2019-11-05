@@ -4,8 +4,6 @@ import sqlalchemy as sa
 from envparse import env
 from os.path import isfile
 
-
-
 # Чтение настроек
 if isfile('.env'):
     env.read_envfile('.env')
