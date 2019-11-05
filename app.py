@@ -65,6 +65,14 @@ async def get_auth(request):
     # except Exception as e:
     #     responce_obj = {'status': 'success', 'message': str(e)}
     #     return web.Response(text=json.dumps(responce_obj), status=500)
+
+    session = await get_session(request)
+    print(str(session))
+    # last_visit = session['last_visit'] if 'last_visit' in session else None
+    session['last_visit'] = time.time()
+    # text = 'Last visited: {}'.format(last_visit)
+    # //return web.Response(text=text)
+
     context = {'name': 'Andrew', 'surname': 'Svetlov'}
     response = aiohttp_jinja2.render_template('auth.html',
                                               request,
@@ -110,6 +118,7 @@ def make_app():
     # secret_key must be 32 url-safe base64-encoded bytes
     fernet_key = fernet.Fernet.generate_key()
     secret_key = base64.urlsafe_b64decode(fernet_key)
+    # print(secret_key.decode('utf8'))
     setup(app, EncryptedCookieStorage(secret_key))
 
 
