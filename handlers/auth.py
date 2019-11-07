@@ -2,8 +2,9 @@ from aiohttp import web
 from aiohttp_session import get_session
 import aiohttp_jinja2
 import time
+import json
 
-
+from model import create_table,get_user
 # @routes.get('/auth')
 # @aiohttp_jinja2.template('auth.html')
 async def get_auth(request):
@@ -30,10 +31,12 @@ async def get_auth(request):
     # text = 'Last visited: {}'.format(last_visit)
     # //return web.Response(text=text)
 
-    context = {'name': 'Andrew', 'surname': 'Svetlov'}
-    response = aiohttp_jinja2.render_template('auth.html',
-                                              request,
-                                              context)
+    context = {'email': '', 'name': 'Andrew', 'surname': 'Svetlov'}
+    response = aiohttp_jinja2.render_template(
+        'auth.html',
+        request,
+        context
+    )
     response.headers['Content-Language'] = 'ru'
     return response
 
@@ -44,13 +47,47 @@ async def post_auth_singin(request):
     :param request:
     :return:
     '''
-    data = await request.post()
-    session = await get_session(request)
-    email = data['email']
-    print(email)
-    last_visit = session['last_visit'] if 'last_visit' in session else None
-    session['last_visit'] = time.time()
-    session['rule'] = ['admin']
+    try:
+        post = await request.json()
+        email = post['email']
+        password = post['password']
 
-    text = 'Last visited: {}'.format(last_visit)
-    return web.Response(text=text)
+
+
+        if post is None or password is None:
+            return web.Response(text=json.dumps({
+                'status': 'error',
+                'message': 'Данные указаны неверно'
+            }), status=401)
+
+        # await create_table(engine=request.app['pg_engine'])
+        user = await get_user(engine=request.app['pg_engine'], json=post)
+        print(str(user))
+        for rowproxy in user:
+            # rowproxy.items() returns an array like [(key0, value0), (key1, value1)]
+            for column, value in rowproxy.items():
+                # build up the dictionary
+                print(column, value)
+
+        # await request.loop.create_task(create_table(engine=engine))
+        # print(str(request.app['pg_engine']))
+
+
+        session = await get_session(request)
+
+        last_visit = session['last_visit'] if 'last_visit' in session else None
+        session['last_visit'] = time.time()
+        session['rule'] = ['admin']
+        text = 'Last visited: {}'.format(last_visit)
+
+        return web.Response(text=json.dumps({
+            'status': 'success',
+            'message': 'Welcome, username'
+        }), status=200)
+
+    except Exception as e:
+
+        return web.Response(text=json.dumps({
+            'status': 'error',
+            'message': str(e)
+        }), status=500)

@@ -1,20 +1,31 @@
-import asyncio
-from aiopg.sa import create_engine, Engine
+# import asyncio
+# from aiopg.sa import create_engine, Engine
 import sqlalchemy as sa
+import base64
 from envparse import env
+# from cryptography import fernet
 from os.path import isfile
+from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
 # Чтение настроек
 if isfile('.env'):
     env.read_envfile('.env')
 
 # Параметры подключения к БД, полученные из .env
-dsn = 'dbname={} user={} password={} host={}'.format(
-    env.str('PG_DATABASE'),
-    env.str('PG_USERNAME'),
-    env.str('PG_PASSWORD'),
-    env.str('PG_SERVER')
-)
+def get_dsn():
+    '''
+    Строка подключения к БД
+    :return:
+    '''
+    return f"dbname={env.str('PG_DATABASE')} user={env.str('PG_USERNAME')} " \
+           f"password={env.str('PG_PASSWORD')} host={env.str('PG_SERVER')}"
+
+def get_sekret_key():
+    '''
+    SECRET_KEY для сессии
+    :return:
+    '''
+    return EncryptedCookieStorage(base64.urlsafe_b64decode(env.str('SECRET_KEY')))
 
 metadata = sa.MetaData()
 
@@ -39,6 +50,25 @@ async def create_table(engine):
         await conn.execute('''CREATE TABLE tbl (
                                   id serial PRIMARY KEY,
                                   val varchar(255))''')
+
+async def get_user(engine, json):
+    '''
+    Проверка существования пользователя/пароля
+    :param engine: Подключение к БД
+    :param json: Объект, содержащий email и password
+    :return:
+    '''
+    # with (yield from engine) as conn:
+    #     uid = yield from conn.execute(tb_user.select().where(email=json['email'], password=json['password']))
+    #     for row in uid:
+    #         print(row.email)
+    #     return uid
+    async with engine.acquire() as conn:
+        row = await conn.execute(tb_user.select()
+                                 .where(tb_user.c.email==json['email'])
+                                 .where(tb_user.c.password==json['password']))
+        # print(row.id, row.email, row.password)
+        return row
 
 # async def go(id):
 #     async with create_engine(
