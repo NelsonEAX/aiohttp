@@ -64,11 +64,17 @@ async def get_user(engine, json):
     #         print(row.email)
     #     return uid
     async with engine.acquire() as conn:
-        row = await conn.execute(tb_user.select()
+        result = []
+        async for row in conn.execute(tb_user.select()
                                  .where(tb_user.c.email==json['email'])
-                                 .where(tb_user.c.password==json['password']))
+                                 .where(tb_user.c.password==json['password'])):
+            result.append(row)
+        return result
         # print(row.id, row.email, row.password)
-        return row
+        # await conn.fetchone()
+
+        # async for row in conn.execute(tb_user.select()):
+        #     print(row.id, row.name, row.surname)
 
 # async def go(id):
 #     async with create_engine(

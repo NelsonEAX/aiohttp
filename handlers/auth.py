@@ -62,12 +62,9 @@ async def post_auth_singin(request):
 
         # await create_table(engine=request.app['pg_engine'])
         user = await get_user(engine=request.app['pg_engine'], json=post)
+
         print(str(user))
-        for rowproxy in user:
-            # rowproxy.items() returns an array like [(key0, value0), (key1, value1)]
-            for column, value in rowproxy.items():
-                # build up the dictionary
-                print(column, value)
+
 
         # await request.loop.create_task(create_table(engine=engine))
         # print(str(request.app['pg_engine']))

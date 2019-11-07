@@ -34,10 +34,10 @@ def make_app():
     Инициализация приложения, установка сессии, установка шаблонов, добавление роутов
     :return:
     '''
-    loop = asyncio.get_event_loop()
+    # loop = asyncio.get_event_loop()
 
     # Инициализируем приложение,
-    app = web.Application(loop=loop, middlewares=[
+    app = web.Application(middlewares=[
         session_middleware(get_sekret_key()),
         # db_middleware, # migrate to app.cleanup_ctx
         auth_middleware,
