@@ -37,11 +37,18 @@ tb_user = sa.Table('user', metadata,
     sa.Column('name', sa.String(255)),
     sa.Column('surname', sa.String(255)))
 
+# Таблица user_rule
+tb_user_rule = sa.Table('user_rule', metadata,
+    sa.Column('id', sa.Integer, primary_key=True),
+    sa.Column('rule', sa.Integer),
+    sa.Column('user', sa.Integer))
+
 # Таблица rule
 tb_rule = sa.Table('rule', metadata,
     sa.Column('id', sa.Integer, primary_key=True),
     sa.Column('rule', sa.String(255)),
     sa.Column('comment', sa.String(255)))
+
 
 # Тестовая функция с raw-запросом
 async def create_table(engine):
@@ -51,30 +58,42 @@ async def create_table(engine):
                                   id serial PRIMARY KEY,
                                   val varchar(255))''')
 
-async def get_user(engine, json):
+async def get_user_by_email(engine, email):
     '''
-    Проверка существования пользователя/пароля
+    Проверка существования пользователя
     :param engine: Подключение к БД
-    :param json: Объект, содержащий email и password
+    :param email: email пользователя
+    :return: Список пользователей
+    '''
+    async with engine.acquire() as conn:
+        async for row in conn.execute(tb_user.select()
+                                 # .where(tb_user.c.password==json['password'])
+                                 .where(tb_user.c.email==email)):
+            # TODO: Требуется автоматическое преобразование в dict, без обращения по индексу
+            return {
+                'id': row[0],
+                'email': row[1],
+                'password': row[2],
+                'name': row[3],
+                'surname': row[4],
+            }
+
+async def get_user_rules(engine, user_id):
+    '''
+    Получение прав пользователя по id
+    :param engine: Подключение к БД
+    :param user_id: id пользователя
     :return:
     '''
-    # with (yield from engine) as conn:
-    #     uid = yield from conn.execute(tb_user.select().where(email=json['email'], password=json['password']))
-    #     for row in uid:
-    #         print(row.email)
-    #     return uid
     async with engine.acquire() as conn:
-        result = []
-        async for row in conn.execute(tb_user.select()
-                                 .where(tb_user.c.email==json['email'])
-                                 .where(tb_user.c.password==json['password'])):
-            result.append(row)
-        return result
-        # print(row.id, row.email, row.password)
-        # await conn.fetchone()
-
-        # async for row in conn.execute(tb_user.select()):
-        #     print(row.id, row.name, row.surname)
+        rules = []
+        join = sa.join(tb_rule, tb_user_rule, tb_rule.c.id == tb_user_rule.c.rule)
+        async for row in conn.execute(tb_rule.select()
+                                              .select_from(join)
+                                              .where(tb_user_rule.c.user == user_id)):
+            # TODO: Требуется автоматическое преобразование в dict, без обращения по индексу
+            rules.append(row[1])
+        return rules
 
 # async def go(id):
 #     async with create_engine(

@@ -2,8 +2,17 @@
 {% block title %}Auth{% endblock %}
 {% block h2text %}Авторизация{% endblock %}
 {% block content %}
+{% if email %}
 <form method="post" accept-charset="utf-8"
-      enctype="application/x-www-form-urlencoded" onsubmit="submitForm(event, this)">
+      enctype="application/x-www-form-urlencoded" onsubmit="submitFormOut(event, this)">
+  <div class="alert alert-warning" role="alert">
+    You are already logged in!
+  </div>
+  <button type="submit" class="btn btn-primary">SingOut</button>
+</form>
+{% else %}
+<form method="post" accept-charset="utf-8"
+      enctype="application/x-www-form-urlencoded" onsubmit="submitFormIn(event, this)">
   <div class="form-group">
     <label for="exampleInputEmail1">Email address</label>
     <input name="email" type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email">
@@ -17,10 +26,12 @@
     <input type="checkbox" class="form-check-input" id="exampleCheck1">
     <label class="form-check-label" for="exampleCheck1">Check me out</label>
   </div>#}
-  <button type="submit" class="btn btn-primary">Submit</button>
+  <button type="submit" class="btn btn-primary">SingIn</button>
 </form>
+{% endif %}
+
 <script>
-function submitForm(event, form){
+function submitFormIn(event, form){
   event.preventDefault();
 
   console.log(form);
@@ -35,6 +46,22 @@ function submitForm(event, form){
   }).catch(function(err) {
     console.log('Error', err);
   });
-}
+};
+function submitFormOut(event, form){
+  event.preventDefault();
+
+  console.log(form);
+  fetch('/auth/singout', {
+    method: 'post',
+    body: JSON.stringify({email: form.email.value, password: form.password.value})
+  }).then(function(response) {
+    console.log('response', response.json());
+    return response.json();
+  }).then(function(data) {
+    console.log('form submited', data);
+  }).catch(function(err) {
+    console.log('Error', err);
+  });
+};
 </script>
 {% endblock %}
