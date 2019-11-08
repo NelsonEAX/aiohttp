@@ -3,7 +3,6 @@
 import sqlalchemy as sa
 import base64
 from envparse import env
-# from cryptography import fernet
 from os.path import isfile
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
@@ -51,12 +50,12 @@ tb_rule = sa.Table('rule', metadata,
 
 
 # Тестовая функция с raw-запросом
-async def create_table(engine):
-    async with engine.acquire() as conn:
-        await conn.execute('DROP TABLE IF EXISTS tbl')
-        await conn.execute('''CREATE TABLE tbl (
-                                  id serial PRIMARY KEY,
-                                  val varchar(255))''')
+# async def create_table(engine):
+#     async with engine.acquire() as conn:
+#         await conn.execute('DROP TABLE IF EXISTS tbl')
+#         await conn.execute('''CREATE TABLE tbl (
+#                                   id serial PRIMARY KEY,
+#                                   val varchar(255))''')
 
 async def get_user_by_email(engine, email):
     '''

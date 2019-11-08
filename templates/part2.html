@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Part2{% endblock %}
+{% block h2text %}Asynchronous Requests{% endblock %}
+{% block content %}
+{% if email %}
+<form method="post" accept-charset="utf-8"
+      enctype="application/x-www-form-urlencoded" onsubmit="submitFormOut(event, this)">
+  <div class="alert alert-warning" role="alert">
+    You are already logged in!
+  </div>
+  <button type="submit" class="btn btn-primary">SingOut</button>
+</form>
+{% else %}
+<form method="post" accept-charset="utf-8"
+      enctype="application/x-www-form-urlencoded" onsubmit="submitFormIn(event, this)">
+  <div class="form-group">
+    <label for="exampleInputEmail1">Email address</label>
+    <input name="email" type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Enter email">
+  </div>
+  <div class="form-group">
+    <label for="exampleInputPassword1">Password</label>
+    <input name="password" type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
+  </div>
+  {#<div class="form-group form-check">
+    <input type="checkbox" class="form-check-input" id="exampleCheck1">
+    <label class="form-check-label" for="exampleCheck1">Check me out</label>
+  </div>#}
+  <button type="submit" class="btn btn-primary">SingIn</button>
+</form>
+{% endif %}
+
+<div class="modal fade bd-example-modal-sm" id="resultmodal" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">An error has occurred</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function setModalMessage(msg) {
+    const modal = $('#resultmodal')
+    modal.modal('show')
+    modal.find('.modal-body').text(msg)
+}
+
+function submitFormIn(event, form){
+  event.preventDefault();
+
+  fetch('/auth/singin', {
+    method: 'post',
+    body: JSON.stringify({email: form.email.value, password: form.password.value})
+  }).then(function(response) {
+    console.log('response', response);
+    if(response.status == 200)
+      window.location.reload();
+    return response.json();
+  }).then(function(data) {
+    console.log('form submited', data);
+    setModalMessage(data.message);
+  }).catch(function(err) {
+    console.log('Error', err);
+    setModalMessage(err.message);
+  });
+};
+function submitFormOut(event, form){
+  event.preventDefault();
+
+  console.log(form);
+  fetch('/auth/singout', {
+    method: 'post'
+  }).then(function(response) {
+    console.log('response', response);
+    if(response.status == 200)
+      window.location.reload();
+    return response.json();
+  }).then(function(data) {
+    console.log('form submited', data);
+    setModalMessage(data.message);
+  }).catch(function(err) {
+    console.log('Error', err);
+    setModalMessage(err.message);
+  });
+};
+</script>
+{% endblock %}

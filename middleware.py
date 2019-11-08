@@ -1,10 +1,8 @@
 from aiohttp import web
 from aiohttp_session import get_session
-
-
-# import asyncio
 from aiopg.sa import create_engine
-from model import get_dsn, get_sekret_key, create_table
+
+from model import get_dsn, get_sekret_key
 
 @web.middleware
 async def auth_middleware(request, handler):
@@ -26,7 +24,7 @@ async def auth_middleware(request, handler):
 
     session = await get_session(request)
 
-    if session.get("rule"):
+    if session.get("rule", None):
         print(f'[auth_middleware] session.get("rule"): {session.get("rule")}')
         return await handler(request)
 

@@ -9,7 +9,7 @@ import aiohttp_jinja2
 import jinja2
 
 from routes import setup_routes
-from model import get_dsn, get_sekret_key, create_table
+from model import get_dsn, get_sekret_key
 from middleware import auth_middleware, db_middleware, pg_engine_ctx
 
 
@@ -53,6 +53,14 @@ def make_app():
     # secret_key = base64.urlsafe_b64decode(fernet_key)
     # print(secret_key.decode('cp1251'))
     # setup(app, EncryptedCookieStorage(secret_key))
+
+
+    # print(str(session))
+    # last_visit = session['last_visit'] if 'last_visit' in session else None
+    # session['last_visit'] = time.time()
+    # session['rule'] = ['admin']
+    # text = 'Last visited: {}'.format(last_visit)
+    # //return web.Response(text=text)
 
     # Указываем шаблонизатору папку с html-шаблонами
     aiohttp_jinja2.setup(app,
