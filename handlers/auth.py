@@ -1,11 +1,12 @@
-from aiohttp import web
-from aiohttp_session import get_session
-import aiohttp_jinja2
 import json
 
+import aiohttp_jinja2
+from aiohttp import web
+from aiohttp_session import get_session
 from model import get_user_by_email, get_user_rules
 
-async def get_auth(request):
+
+async def view_auth(request):
     '''
     :param request: get-запрос /auth
     :return: Контент страницы /auth
@@ -13,18 +14,15 @@ async def get_auth(request):
     try:
         context = {}
         session = await get_session(request)
-        if(session.get('email', None) is not None):
+        if session.get('email', None) is not None:
             context['email'] = session['email']
 
-        response = aiohttp_jinja2.render_template(
-            'auth.html',
-            request,
-            context
-        )
+        response = aiohttp_jinja2.render_template('auth.html', request, context)
         response.headers['Content-Language'] = 'ru'
         return response
 
     except Exception as e:
+        print('[get_auth] except ', e)
         return web.Response(text=json.dumps({'status': 'error', 'message': str(e)}), status=500)
 
 
@@ -35,8 +33,6 @@ async def post_auth_singin(request):
     :return: статус и сервисное сообщение
     '''
     try:
-        print('[post_auth_singin] try')
-
         # Получаем и проверям данные для входа
         post = await request.json()
         if post['email'] is None or post['password'] is None:
@@ -45,10 +41,12 @@ async def post_auth_singin(request):
         user = await get_user_by_email(engine=request.app['pg_engine'], email=post['email'])
 
         # TODO: Так пароли хранить и проверять НЕЛЬЗЯ
-        if user is None or post['password'] != user['password']:
+        # Найден пользователь and пароли совпадают and пользователь не удален
+        if user is None or post['password'] != user['password'] or user['delete_at'] is not None:
             raise Warning('Неверно указан логин или пароль')
 
         session = await get_session(request)
+        session['id'] = user['id']
         session['email'] = user['email']
         session['rule'] = await get_user_rules(engine=request.app['pg_engine'], user_id=user['id'])
 
@@ -74,7 +72,6 @@ async def post_auth_singout(request):
     :return: статус и сервисное сообщение
     '''
     try:
-        print('[post_auth_singout] try')
         session = await get_session(request)
         session.clear()
 

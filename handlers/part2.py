@@ -1,6 +1,6 @@
 import aiohttp_jinja2
 
-async def get_part2(request):
+async def view_part2(request):
     '''
 
     :param request:
@@ -19,8 +19,6 @@ async def get_part2(request):
             {'id': '4', 'email': 'email_4', 'name': 'name_4', 'surname': 'surname_4'}
         ]
     }
-    response = aiohttp_jinja2.render_template('part2.html',
-                                              request,
-                                              context)
+    response = aiohttp_jinja2.render_template('part2.html', request, context)
     response.headers['Content-Language'] = 'ru'
     return response

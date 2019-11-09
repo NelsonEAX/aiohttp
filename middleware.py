@@ -2,7 +2,8 @@ from aiohttp import web
 from aiohttp_session import get_session
 from aiopg.sa import create_engine
 
-from model import get_dsn, get_sekret_key
+from model import get_dsn
+
 
 @web.middleware
 async def auth_middleware(request, handler):
@@ -14,29 +15,35 @@ async def auth_middleware(request, handler):
     :param handler:
     :return:
     '''
-    print('[auth_middleware] start')
+    print(f'[auth_middleware] start {request.path}')
+    if request.path.startswith('/static/'):
+        response = await handler(request)
+        return response
 
-    def need_auth_path(path):
-        for r in ['/index', '/auth']:
-            if path.startswith(r):
-                return False
-        return True
+    # Доступные пути исходя из прав доступа пользователя
+    guest_path = ['/', '/index', '/auth', '/auth/singin']
+    view_path = guest_path + ['/auth/singout', '/table', '/part2']
+    edit_path = view_path + ['/table/create', '/table/read', '/table/update', '/table/delete']
+    admin_path = edit_path + ['/table/restore']
 
     session = await get_session(request)
+    rules = session.get("rule", [])
 
-    if session.get("rule", None):
-        print(f'[auth_middleware] session.get("rule"): {session.get("rule")}')
+    allowed_path = guest_path
+    if 'admin' in rules:
+        allowed_path = admin_path
+    elif 'edit' in rules:
+        allowed_path = edit_path
+    elif 'view' in rules:
+        allowed_path = view_path
+
+    result = f'path="{request.path}" rules="{str(rules)}" {str(allowed_path)}'
+    if request.path in allowed_path:
+        print(f'[auth_middleware] allowed {result}')
         return await handler(request)
-
-    elif need_auth_path(request.path):
-        print('[auth_middleware] need_auth_path(request.path)')
-        url = request.app.router['/auth'].url()
-        raise web.HTTPFound(url)
-        # return handler(request)
-
     else:
-        print('[auth_middleware] handler(request)')
-        return await handler(request)
+        print(f'[auth_middleware] NOT allowed {result}')
+        raise web.HTTPFound(request.app.router['/auth'].url())
 
 
 @web.middleware

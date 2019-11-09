@@ -1,16 +1,10 @@
-import json
-
-import asyncio
-from aiohttp import web
-from aiohttp_session import session_middleware
-from aiopg.sa import create_engine
-
 import aiohttp_jinja2
 import jinja2
-
+from aiohttp import web
+from aiohttp_session import session_middleware
+from middleware import auth_middleware, pg_engine_ctx
+from model import get_sekret_key
 from routes import setup_routes
-from model import get_dsn, get_sekret_key
-from middleware import auth_middleware, db_middleware, pg_engine_ctx
 
 
 # engine = loop.run_until_complete(create_engine(get_dsn(), loop=loop))
