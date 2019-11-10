@@ -1,10 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Table{% endblock %}
-{% block h2text %}Таблица редактирования{% endblock %}
-{% block content %}
+{% block h2text %}Table
 {%- if 'admin' in rule or 'edit' in rule -%}
-<button type="button" class="btn btn-primary float-right" onclick="setModalNew()">Добавить пользователя</button>
+<button type="button" class="btn btn-primary float-right" onclick="setModalNew()">Add user</button>
 {% endif %}
+{% endblock %}
+{% block content %}
+
 <table class="table table-sm">
     <thead class="thead-light">
         <tr>

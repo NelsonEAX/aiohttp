@@ -16,13 +16,15 @@ async def auth_middleware(request, handler):
     :return:
     '''
     print(f'[auth_middleware] start {request.path}')
-    if request.path.startswith('/static/'):
-        response = await handler(request)
-        return response
+    if request.path.startswith('/static/') or request.path.startswith('/favicon.ico'):
+        return await handler(request)
 
     # Available paths based on user permissions
     guest_path = ['/', '/index', '/auth', '/auth/singin']
-    view_path = guest_path + ['/auth/singout', '/table', '/part2']
+    view_path = guest_path + [
+        '/auth/singout', '/table', '/part2',
+        '/part2/json/0', '/part2/json/1', '/part2/json/2', '/part2/json/3', '/part2/json/4'
+    ]
     edit_path = view_path + ['/table/create', '/table/read', '/table/update', '/table/delete']
     admin_path = edit_path + ['/table/restore']
 
@@ -43,7 +45,7 @@ async def auth_middleware(request, handler):
         return await handler(request)
 
     print(f'[auth_middleware] NOT allowed {result}')
-    raise web.HTTPFound(request.app.router['/auth'].url())
+    return web.HTTPFound(request.app.router['auth'].url())
 
 
 @web.middleware

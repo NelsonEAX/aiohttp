@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 '''Table page module'''
 
-import json
-
 import aiohttp_jinja2
 from aiohttp_session import get_session
 from aiohttp import web
@@ -32,7 +30,7 @@ async def view_table(request):
 
     except Exception as exc:
         print('[get_table] except ', exc)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
+        return web.json_response({'status': 'error', 'message': str(exc)}, status=500)
 
 
 async def post_table_read(request):
@@ -49,10 +47,10 @@ async def post_table_read(request):
         if len(user_info) == 0:
             raise Warning('Invalid data')
 
-        return web.Response(text=json.dumps(user_info), status=200)
+        return web.json_response(user_info, status=200)
     except Exception as exc:
         print('[post_table_read] except ', exc)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
+        return web.json_response({'status': 'error', 'message': str(exc)}, status=500)
 
 
 async def post_table_create(request):
@@ -67,10 +65,10 @@ async def post_table_create(request):
 
         await create_user(engine=request.app['pg_engine'], data=post)
 
-        return web.Response(text=json.dumps(post), status=200)
+        return web.json_response(post, status=200)
     except Exception as exc:
         print('[post_table_create] except ', exc)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
+        return web.json_response({'status': 'error', 'message': str(exc)}, status=500)
 
 
 async def post_table_update(request):
@@ -86,10 +84,10 @@ async def post_table_update(request):
 
         await update_user(engine=request.app['pg_engine'], data=post)
 
-        return web.Response(text=json.dumps(post), status=200)
+        return web.json_response(post, status=200)
     except Exception as exc:
         print('[post_table_update] except ', exc)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
+        return web.json_response({'status': 'error', 'message': str(exc)}, status=500)
 
 
 async def table_delete_restore_user(request, restore=False):
@@ -120,15 +118,11 @@ async def post_table_restore(request):
     '''
     try:
         await table_delete_restore_user(request, restore=True)
-
-        return web.Response(text=json.dumps({
-            'status': 'succes',
-            'message': 'ok post_table_delete'
-        }), status=200)
+        return web.json_response({'status': 'succes', 'message': 'ok restore'}, status=200)
 
     except Exception as exc:
         print('[post_table_delete] except ', exc)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
+        return web.json_response({'status': 'error', 'message': str(exc)}, status=500)
 
 
 async def post_table_delete(request):
@@ -138,12 +132,8 @@ async def post_table_delete(request):
     '''
     try:
         await table_delete_restore_user(request, restore=False)
-
-        return web.Response(text=json.dumps({
-            'status': 'succes',
-            'message': 'ok post_table_delete'
-        }), status=200)
+        return web.json_response({'status': 'succes', 'message': 'ok delete'}, status=200)
 
     except Exception as exc:
         print('[post_table_delete] except ', exc)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
+        return web.json_response({'status': 'error', 'message': str(exc)}, status=500)

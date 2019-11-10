@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 '''Auth page module'''
 
-import json
-
 import aiohttp_jinja2
 from aiohttp_session import get_session
 from aiohttp import web
@@ -10,7 +8,6 @@ from aiohttp import web
 # pylint: disable=import-error
 from model import get_user_by_email, get_user_rules
 # pylint: enable=import-error
-
 
 
 async def view_auth(request):
@@ -30,7 +27,7 @@ async def view_auth(request):
 
     except Exception as exc:
         print('[get_auth] except ', exc)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
+        return web.json_response({'status': 'error', 'message': str(exc)}, status=500)
 
 
 async def post_auth_singin(request):
@@ -57,18 +54,14 @@ async def post_auth_singin(request):
         session['rule'] = await get_user_rules(engine=request.app['pg_engine'], user_id=user['id'])
 
         print('[post_auth_singin] user', str(user), str(session['rule']))
-
-        return web.Response(text=json.dumps({
-            'status': 'succes',
-            'message': 'ok post_auth_singin'
-        }), status=200)
+        return web.json_response({'status': 'succes', 'message': 'ok post_auth_singin'}, status=200)
 
     except Exception as exc:
         print('[post_auth_singin] except ', exc)
-        return web.Response(text=json.dumps({
+        return web.json_response({
             'status': 'error',
             'message': str(exc)
-        }), status=(401 if type(exc).__name__ == 'Warning' else 500))
+        }, status=(401 if type(exc).__name__ == 'Warning' else 500))
 
 
 async def post_auth_singout(request):
@@ -79,15 +72,8 @@ async def post_auth_singout(request):
     try:
         session = await get_session(request)
         session.clear()
-
-        return web.Response(text=json.dumps({
-            'status': 'succes',
-            'message': 'ok post_auth_singout'
-        }), status=200)
+        return web.json_response({'status': 'succes', 'message': 'singout ok'}, status=200)
 
     except Exception as exc:
         print('[post_auth_singout] except ', exc)
-        return web.Response(text=json.dumps({
-            'status': 'error',
-            'message': str(exc)
-        }), status=500)
+        return web.json_response({'status': 'error', 'message': str(exc)}, status=500)
