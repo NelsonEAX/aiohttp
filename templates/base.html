@@ -78,22 +78,22 @@
 
     // Post form-body data to url
     function evalFetch(url, body){
-      fetch(url, {
-        method: 'post',
-        body: body
-      }).then(function(response) {
-        console.log('response', response);
-        if(response.status == 200)
-          window.location.reload();
-        else
-          return response.json();
-      }).then(function(data) {
-        console.log('form submited', data);
-        setModalMessage(data.message);
-      }).catch(function(err) {
-        console.log('Error', err);
-        setModalMessage(err.message);
-      });
+        fetch(url, {
+            method: 'post',
+            body: body
+        }).then(function(response) {
+            console.log('response', response);
+            if(response.status == 200)
+                window.location.reload();
+            else
+                return response.json();
+        }).then(function(data) {
+            console.log('form submited', data);
+            setModalMessage(data.message);
+        }).catch(function(err) {
+            console.log('Error', err);
+            setModalMessage(err.message);
+        });
     }
 
 </script>
