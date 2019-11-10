@@ -1,12 +1,15 @@
+# -*- coding: utf-8 -*-
+'''The file contains information about routes'''
+
 from handlers.auth import view_auth, post_auth_singin, post_auth_singout
 from handlers.index import view_index
 from handlers.part2 import view_part2
-from handlers.table import view_table, post_table_create, post_table_read, post_table_update, post_table_restore, \
-    post_table_delete
+from handlers.table import view_table, post_table_create, post_table_read, \
+    post_table_update, post_table_restore, post_table_delete
 
 
 def setup_routes(app):
-    '''
+    '''Application REST API
     :param app: application instance
     :return:
     '''

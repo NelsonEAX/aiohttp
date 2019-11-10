@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
+'''Test part 2 module'''
+
 import aiohttp_jinja2
 
 async def view_part2(request):
-    '''
-
-    :param request:
-    :return:
+    '''Get Test Part 2 page
+    :param request: get-request /part2
+    :return: page /test2
     '''
 
     # responce_obj = {'status': 'success'}

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+'''The file contains functions for working with the database'''
+
 import base64
 import time
 from os.path import isfile
@@ -6,15 +9,14 @@ import sqlalchemy as sa
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from envparse import env
 
-# Чтение настроек
+# Reading settings file
 if isfile('.env'):
     env.read_envfile('.env')
 
 
-# Параметры подключения к БД, полученные из .env
+# Database connection parameters obtained from .env
 def get_dsn():
-    '''
-    Строка подключения к БД
+    '''DB connection string
     :return:
     '''
     return f"dbname={env.str('PG_DATABASE')} user={env.str('PG_USERNAME')} " \
@@ -22,16 +24,14 @@ def get_dsn():
 
 
 def get_sekret_key():
-    '''
-    SECRET_KEY для сессии
+    '''SECRET_KEY for the session
     :return:
     '''
     return EncryptedCookieStorage(base64.urlsafe_b64decode(env.str('SECRET_KEY')))
 
 
 def get_timestamp_str():
-    '''
-    Строка TimeStamp текущей временной метки для базы
+    '''TimeStamp string of the current timestamp for the base
     :return:
     '''
     return time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
@@ -39,7 +39,7 @@ def get_timestamp_str():
 
 metadata = sa.MetaData()
 
-# Таблица user
+# Table user
 tb_user = sa.Table(
     'user',
     metadata,
@@ -51,7 +51,7 @@ tb_user = sa.Table(
     sa.Column('create_at', sa.TIMESTAMP),
     sa.Column('delete_at', sa.TIMESTAMP))
 
-# Таблица user_rule
+# Table user_rule
 tb_user_rule = sa.Table(
     'user_rule',
     metadata,
@@ -59,7 +59,7 @@ tb_user_rule = sa.Table(
     sa.Column('rule', None, sa.ForeignKey('tb_rule.id')),
     sa.Column('user', None, sa.ForeignKey('tb_user.id')))
 
-# Таблица rule
+# Table rule
 tb_rule = sa.Table(
     'rule',
     metadata,
@@ -69,17 +69,13 @@ tb_rule = sa.Table(
 
 
 async def get_user_by_email(engine, email):
-    '''
-    Проверка существования пользователя
-    :param engine: Подключение к БД
-    :param email: email пользователя
-    :return: Список пользователей
+    '''User existence check
+    :param engine: DB connection
+    :param email: user email
+    :return: a list of users
     '''
     async with engine.acquire() as conn:
-        async for row in conn.execute(tb_user.select()
-                                              # .where(tb_user.c.password==json['password'])
-                                              .where(tb_user.c.email == email)):
-            # TODO: Требуется автоматическое преобразование в dict, без обращения по индексу
+        async for row in conn.execute(tb_user.select().where(tb_user.c.email == email)):
             return {
                 'id': row[0],
                 'email': row[1],
@@ -92,32 +88,28 @@ async def get_user_by_email(engine, email):
 
 
 async def get_user_rules(engine, user_id):
-    '''
-    Получение прав пользователя по id
-    :param engine: Подключение к БД
-    :param user_id: id пользователя
-    :return:
+    '''Obtaining user rights by id
+    :param engine: DB connection
+    :param user_id: user id
+    :return: user rights list
     '''
     async with engine.acquire() as conn:
         rules = []
         join = sa.join(tb_rule, tb_user_rule, tb_rule.c.id == tb_user_rule.c.rule)
-        async for row in conn.execute(tb_rule.select()
-                                              .select_from(join)
-                                              .where(tb_user_rule.c.user == user_id)):
+        async for row in conn.execute(
+                tb_rule.select().select_from(join).where(tb_user_rule.c.user == user_id)):
             rules.append(row[1])
         return rules
 
 
 async def get_user_info(engine, user_id):
-    '''
-    Получение данных о пользователе по id
-    :param engine: Подключение к БД
-    :param user_id: id пользователя
-    :return:
+    '''Getting user data by id
+    :param engine: DB connection
+    :param user_id: user id
+    :return: user information
     '''
     async with engine.acquire() as conn:
-        async for row in conn.execute(tb_user.select()
-                                              .where(tb_user.c.id == user_id)):
+        async for row in conn.execute(tb_user.select().where(tb_user.c.id == user_id)):
             return {
                 'id': row[0],
                 'email': row[1],
@@ -129,11 +121,10 @@ async def get_user_info(engine, user_id):
 
 
 async def get_users(engine, admin):
-    '''
-    Получение данных о пользователях
-    :param engine: Подключение к БД
-    :param admin: Запрос данных для пользователя с правами админа
-    :return:
+    '''Retrieving user data
+    :param engine: DB connection
+    :param admin: Request data for admin user
+    :return: a list of users
     '''
     async with engine.acquire() as conn:
         users = []
@@ -141,7 +132,7 @@ async def get_users(engine, admin):
         async for row in await conn.execute(
                 f'''SELECT u.id, u.email, u.password, u.name, u.surname, u.delete_at,
                 ARRAY(
-                    SELECT r.rule 
+                    SELECT r.rule
                     FROM "user_rule" as ur
                     LEFT JOIN "rule" as r on ur.rule = r.id
                     WHERE ur.user = u.id
@@ -149,7 +140,7 @@ async def get_users(engine, admin):
                 FROM "user" as u
                 {where}
                 ORDER BY u.id;'''):
-            # Если данные запрашивает не Админ, то не показываем админов
+            # If the data is requested not by the Admin, then we do not show the admins
             if not admin and 'admin' in row[6]:
                 continue
             users.append({
@@ -158,17 +149,16 @@ async def get_users(engine, admin):
                 'password': row[2],
                 'name': row[3],
                 'surname': row[4],
-                'delete': False if row[5] is None else True,
+                'delete': row[5] is not None,
                 'rules': row[6]
             })
         return users
 
 
 async def get_rules(engine):
-    '''
-    Получение данных о правах
-    :param engine: Подключение к БД
-    :return:
+    '''Obtaining rights data
+    :param engine: DB connection
+    :return: list of rights
     '''
     async with engine.acquire() as conn:
         rules = {}
@@ -179,41 +169,40 @@ async def get_rules(engine):
 
 
 async def set_rules_for_user(engine, user_id, data):
-    '''
-    Установка/изменение прав пользователя
-    :param engine: Подключение к БД
-    :param user_id:
-    :param data:
+    '''Setting / changing user rights
+    :param engine: DB connection
+    :param user_id: user id
+    :param data: data for setting
     :return:
     '''
     rules = await get_rules(engine)
     user_rules = await get_user_rules(engine, user_id)
 
     for rule, rule_id in rules.items():
-        # Текущая роль уже есть у пользователя и из формы прилетела в True - ничего не делаем, уже хорошо
+        # The user already has the current role and from the form flew to True
         # if rule in user_rules and data.get(rule, False) is True:
 
-        # Текущей роли нет у пользователя и из формы прилетела в False - ничего не делаем, уже хорошо
+        # The user does not have the current role and from the form flew to False
         # if rule not in user_rules and data.get(rule, False) is False:
 
-        # Роль есть у пользователя, но с формы прилетела False - удаляем
+        # The user has a role, but False has arrived from the form - delete
         if rule in user_rules and data.get(rule, False) is False:
             async with engine.acquire() as conn:
-                print(tb_user_rule.delete().where(tb_user_rule.c.user == user_id).where(tb_user_rule.c.rule == rule_id))
                 await conn.execute(
-                    tb_user_rule.delete().where(tb_user_rule.c.user == user_id).where(tb_user_rule.c.rule == rule_id))
+                    tb_user_rule.delete(None)
+                    .where(tb_user_rule.c.user == user_id)
+                    .where(tb_user_rule.c.rule == rule_id))
 
-        # Роли нет у пользователя, но с формы прилетела True - добавляем
+        # The user does not have roles, but True has arrived from the form - add
         if rule not in user_rules and data.get(rule, False) is True:
             async with engine.acquire() as conn:
-                await conn.execute(tb_user_rule.insert().values(user=user_id, rule=rule_id))
+                await conn.execute(tb_user_rule.insert(None).values(user=user_id, rule=rule_id))
 
 
 async def set_delete_at_for_user(engine, user_id, restore=False):
-    '''
-    Удаляем пользователя по id
-    :param engine: Подключение к БД
-    :param user_id: id удаляемого пользователя
+    '''Delete user by id
+    :param engine: DB connection
+    :param user_id: id of the user to be deleted
     :return:
     '''
     timestamp = 'null' if restore else f"'{get_timestamp_str()}'"
@@ -223,19 +212,18 @@ async def set_delete_at_for_user(engine, user_id, restore=False):
 
 
 async def create_user(engine, data):
-    '''
-    Создание пользователя
-    :param engine:
-    :param data:
+    '''User creation
+    :param engine: DB connection
+    :param data: new user data
     :return:
     '''
     async with engine.acquire() as conn:
         user = await get_user_by_email(engine=engine, email=data['email'])
         if user is not None:
-            raise Warning('Пользователь с таким email уже существует')
+            raise Warning('A user with this email already exists.')
 
         user_id = await conn.scalar(
-            tb_user.insert().values(
+            tb_user.insert(None).values(
                 email=data['email'],
                 password=data['password'],
                 name=data['name'],
@@ -246,26 +234,25 @@ async def create_user(engine, data):
 
 
 async def update_user(engine, data):
-    '''
-    Обновление данных пользователя
-    :param engine:
-    :param data:
+    '''User data update
+    :param engine: DB connection
+    :param data: user data to update
     :return:
     '''
     async with engine.acquire() as conn:
-        # Проверим, что переданный email совпадает с текущим, либо что он уникален в БД
+        # Check that the email matches the current one, or that it is unique in the database
         user = await get_user_by_email(engine=engine, email=data['email'])
         if user is not None and int(user['id']) != int(data['id']):
-            raise Warning('Пользователь с таким email уже существует')
+            raise Warning('A user with this email already exists')
 
         await conn.execute(
             sa.update(tb_user)
-                .values({
+            .values({
                 'email': data['email'],
                 'password': data['password'],
                 'name': data['name'],
                 'surname': data['surname']
             })
-                .where(tb_user.c.id == int(data['id'])))
+            .where(tb_user.c.id == int(data['id'])))
 
         await set_rules_for_user(engine=engine, user_id=int(data['id']), data=data)

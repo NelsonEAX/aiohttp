@@ -1,15 +1,22 @@
+# -*- coding: utf-8 -*-
+'''Auth page module'''
+
 import json
 
 import aiohttp_jinja2
-from aiohttp import web
 from aiohttp_session import get_session
+from aiohttp import web
+
+# pylint: disable=import-error
 from model import get_user_by_email, get_user_rules
+# pylint: enable=import-error
+
 
 
 async def view_auth(request):
-    '''
-    :param request: get-запрос /auth
-    :return: Контент страницы /auth
+    '''Get Auth page
+    :param request: get-request /auth
+    :return: page /auth
     '''
     try:
         context = {}
@@ -21,29 +28,28 @@ async def view_auth(request):
         response.headers['Content-Language'] = 'ru'
         return response
 
-    except Exception as e:
-        print('[get_auth] except ', e)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(e)}), status=500)
+    except Exception as exc:
+        print('[get_auth] except ', exc)
+        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
 
 
 async def post_auth_singin(request):
-    '''
-    Авторизация на сайте
-    :param request: post содержит поля email и password
-    :return: статус и сервисное сообщение
+    '''Authorization on the site
+    :param request: post contains email and password fields
+    :return: status and service message
     '''
     try:
-        # Получаем и проверям данные для входа
+        # Receive and verify login details
         post = await request.json()
         if post['email'] is None or post['password'] is None:
-            raise Warning('Данные указаны неверно')
+            raise Warning('Invalid data')
 
         user = await get_user_by_email(engine=request.app['pg_engine'], email=post['email'])
 
-        # TODO: Так пароли хранить и проверять НЕЛЬЗЯ
-        # Найден пользователь and пароли совпадают and пользователь не удален
+        # Do not store passwords in their pure form
+        # User found and passwords match and user not deleted
         if user is None or post['password'] != user['password'] or user['delete_at'] is not None:
-            raise Warning('Неверно указан логин или пароль')
+            raise Warning('Invalid username or password')
 
         session = await get_session(request)
         session['id'] = user['id']
@@ -57,19 +63,18 @@ async def post_auth_singin(request):
             'message': 'ok post_auth_singin'
         }), status=200)
 
-    except Exception as e:
-        print('[post_auth_singin] except ', e)
+    except Exception as exc:
+        print('[post_auth_singin] except ', exc)
         return web.Response(text=json.dumps({
             'status': 'error',
-            'message': str(e)
-        }), status=(401 if type(e).__name__ == 'Warning' else 500))
+            'message': str(exc)
+        }), status=(401 if type(exc).__name__ == 'Warning' else 500))
 
 
 async def post_auth_singout(request):
-    '''
-    Очистка сессии клиента
-    :param request: post-запрос
-    :return: статус и сервисное сообщение
+    '''Clearing a client session
+    :param request: post-request
+    :return: status and service message
     '''
     try:
         session = await get_session(request)
@@ -80,9 +85,9 @@ async def post_auth_singout(request):
             'message': 'ok post_auth_singout'
         }), status=200)
 
-    except Exception as e:
-        print('[post_auth_singout] except ', e)
+    except Exception as exc:
+        print('[post_auth_singout] except ', exc)
         return web.Response(text=json.dumps({
             'status': 'error',
-            'message': str(e)
+            'message': str(exc)
         }), status=500)

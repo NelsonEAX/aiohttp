@@ -1,16 +1,16 @@
-from aiohttp import web
+# -*- coding: utf-8 -*-
+'''The file contains functions for preprocessing requests'''
+
 from aiohttp_session import get_session
 from aiopg.sa import create_engine
+from aiohttp import web
 
 from model import get_dsn
 
 
 @web.middleware
 async def auth_middleware(request, handler):
-    '''
-    При переходе проверяем, что
-    - Есть сессия
-    - Либо страница не требует авторизации
+    '''Upon transition, check that the request matches the access level
     :param request:
     :param handler:
     :return:
@@ -20,7 +20,7 @@ async def auth_middleware(request, handler):
         response = await handler(request)
         return response
 
-    # Доступные пути исходя из прав доступа пользователя
+    # Available paths based on user permissions
     guest_path = ['/', '/index', '/auth', '/auth/singin']
     view_path = guest_path + ['/auth/singout', '/table', '/part2']
     edit_path = view_path + ['/table/create', '/table/read', '/table/update', '/table/delete']
@@ -41,17 +41,15 @@ async def auth_middleware(request, handler):
     if request.path in allowed_path:
         print(f'[auth_middleware] allowed {result}')
         return await handler(request)
-    else:
-        print(f'[auth_middleware] NOT allowed {result}')
-        raise web.HTTPFound(request.app.router['/auth'].url())
+
+    print(f'[auth_middleware] NOT allowed {result}')
+    raise web.HTTPFound(request.app.router['/auth'].url())
 
 
 @web.middleware
 async def db_middleware(request, handler):
-    '''
-
-    Подключение к БД. Вызывается для каждого запроса, поэтому создает лишнюю нагрузку
-    Вариант рабочий, но
+    '''Connection to the database.
+    Called for each request, therefore, creates an extra load. Replaced
     :param request:
     :param handler:
     :return:
@@ -69,10 +67,9 @@ async def db_middleware(request, handler):
 
 
 async def pg_engine_ctx(app):
-    '''
+    '''Initializing the application and adding it to the context using app.cleanup_ctx.append ()
+    Connects at application startup and closes the connection upon exit
     https://aiohttp.readthedocs.io/en/stable/web_advanced.html#cleanup-context
-    Инициализация приложения и добавление его в контекс посредством app.cleanup_ctx.append()
-    Подключается при старте приложения и закрывает соединение при выходе
     :param app:
     :return:
     '''

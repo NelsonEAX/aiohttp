@@ -1,16 +1,22 @@
+# -*- coding: utf-8 -*-
+'''Table page module'''
+
 import json
 
 import aiohttp_jinja2
-from aiohttp import web
 from aiohttp_session import get_session
+from aiohttp import web
+
+# pylint: disable=import-error
 from model import get_users, get_user_info, set_delete_at_for_user, create_user, update_user
+# pylint: enable=import-error
+
 
 
 async def view_table(request):
-    '''
-
-    :param request:
-    :return:
+    '''Get Table page
+    :param request: get-request /table
+    :return: page /table
     '''
     try:
         session = await get_session(request)
@@ -24,98 +30,92 @@ async def view_table(request):
         response.headers['Content-Language'] = 'ru'
         return response
 
-    except Exception as e:
-        print('[get_table] except ', e)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(e)}), status=500)
+    except Exception as exc:
+        print('[get_table] except ', exc)
+        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
 
 
 async def post_table_read(request):
-    '''
-
-    :param request:
+    '''Reading user data
+    :param request: post-request
     :return:
     '''
     try:
-        # Получаем и проверям данные для входа
         post = await request.json()
         if post['id'] is None:
-            raise Warning('Данные указаны неверно')
+            raise Warning('Invalid data')
 
         user_info = await get_user_info(engine=request.app['pg_engine'], user_id=post['id'])
         if len(user_info) == 0:
-            raise Warning('Данные указаны неверно')
+            raise Warning('Invalid data')
 
         return web.Response(text=json.dumps(user_info), status=200)
-    except Exception as e:
-        print('[post_table_read] except ', e)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(e)}), status=500)
+    except Exception as exc:
+        print('[post_table_read] except ', exc)
+        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
 
 
 async def post_table_create(request):
-    '''
-
-    :param request:
+    '''Create a new user
+    :param request: post-request
     :return:
     '''
     try:
-        # Получаем и проверям данные для создания записи
         post = await request.json()
         if post['email'] == '' or post['password'] == '':
-            raise Warning('Не заполнены обязательные поля')
+            raise Warning('Required fields are not filled')
 
         await create_user(engine=request.app['pg_engine'], data=post)
 
         return web.Response(text=json.dumps(post), status=200)
-    except Exception as e:
-        print('[post_table_create] except ', e)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(e)}), status=500)
+    except Exception as exc:
+        print('[post_table_create] except ', exc)
+        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
 
 
 async def post_table_update(request):
-    '''
-
-    :param request:
+    '''User data update
+    :param request: post-request
     :return:
     '''
     try:
-        # Получаем и проверям данные для обновления записи
+        # Receive and verify data to update the record
         post = await request.json()
         if post['email'] == '' or post['password'] == '':
-            raise Warning('Не заполнены обязательные поля')
+            raise Warning('Required fields are not filled')
 
         await update_user(engine=request.app['pg_engine'], data=post)
 
         return web.Response(text=json.dumps(post), status=200)
-    except Exception as e:
-        print('[post_table_update] except ', e)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(e)}), status=500)
+    except Exception as exc:
+        print('[post_table_update] except ', exc)
+        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
 
 
 async def table_delete_restore_user(request, restore=False):
-    '''
-
-    :param request:
-    :param user_id:
-    :param restore:
+    '''Delete or restore user
+    :param request: post-request
+    :param user_id: user id for delete or restore
+    :param restore: state
     :return:
     '''
     print(f'[table_delete_restore_user] start {restore}')
 
     post = await request.json()
     if post['id'] is None:
-        raise Warning('Нет id пользователя')
+        raise Warning('No user id')
 
     session = await get_session(request)
     if session.get('id', None) == int(post['id']):
-        raise Warning('Нельзя удалить собственного пользователя')
+        raise Warning('Cannot delete own user')
 
-    await set_delete_at_for_user(engine=request.app['pg_engine'], user_id=int(post['id']), restore=restore)
+    await set_delete_at_for_user(
+        engine=request.app['pg_engine'], user_id=int(post['id']), restore=restore)
 
 
 async def post_table_restore(request):
-    '''
-    Восстановление записи пользователя
-    :param request:
+    '''User record recovery
+    :param request: post-request
     :return:
     '''
     try:
@@ -126,15 +126,14 @@ async def post_table_restore(request):
             'message': 'ok post_table_delete'
         }), status=200)
 
-    except Exception as e:
-        print('[post_table_delete] except ', e)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(e)}), status=500)
+    except Exception as exc:
+        print('[post_table_delete] except ', exc)
+        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
 
 
 async def post_table_delete(request):
-    '''
-    Удаление записи пользователя
-    :param request:
+    '''Delete user record
+    :param request: post-request
     :return:
     '''
     try:
@@ -145,6 +144,6 @@ async def post_table_delete(request):
             'message': 'ok post_table_delete'
         }), status=200)
 
-    except Exception as e:
-        print('[post_table_delete] except ', e)
-        return web.Response(text=json.dumps({'status': 'error', 'message': str(e)}), status=500)
+    except Exception as exc:
+        print('[post_table_delete] except ', exc)
+        return web.Response(text=json.dumps({'status': 'error', 'message': str(exc)}), status=500)
