@@ -6,7 +6,7 @@ async-timeout==3.0.1
 attrs==19.3.0
 cffi==1.13.2
 chardet==3.0.4
-cryptography==2.8
+cryptography==3.2
 envparse==0.2.0
 idna==2.8
 idna-ssl==1.1.0
