@@ -10,7 +10,7 @@ cryptography==2.8
 envparse==0.2.0
 idna==2.8
 idna-ssl==1.1.0
-Jinja2==2.10.3
+Jinja2==2.11.3
 MarkupSafe==1.1.1
 multidict==4.5.2
 psycopg2-binary==2.8.4
